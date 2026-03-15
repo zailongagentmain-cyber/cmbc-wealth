@@ -7,6 +7,7 @@
 - **项目名称**: CMBC Wealth Analyzer (民生理财分析器)
 - **目标**: 自动抓取民生理财产品数据、净值、公告，构建查询与分析系统
 - **数据源**: https://www.cmbcwm.com.cn
+- **线上地址**: https://zailongagent-cmbc-wealth-trail-1.streamlit.app/
 - **状态**: 开发中
 
 ## 2. 当前进度
