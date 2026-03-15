@@ -182,11 +182,34 @@ def get_net_values(prd_code, begin_date="", end_date=""):
     return resp.json()
 
 
-def get_announcements(prd_code, samj_type="8"):
+def get_announcements(prd_code, samj_type="8", page_no=1, page_size=50):
+    """获取公告列表（支持分页）"""
     url = f"{BASE_URL}/BTAFileQry"
-    data = {"real_prd_code": prd_code, "SAMJ_TYPE": samj_type}
+    data = {"real_prd_code": prd_code, "SAMJ_TYPE": samj_type, "pageNo": str(page_no), "pageSize": str(page_size)}
     resp = requests.post(url, data=data, headers=HEADERS, timeout=30)
     return resp.json()
+
+
+def get_all_announcements(prd_code, samj_type="8"):
+    """获取所有公告（自动分页）"""
+    all_ann = []
+    page = 1
+    page_size = 50
+    
+    while True:
+        result = get_announcements(prd_code, samj_type, page, page_size)
+        if result.get("returnCode", {}).get("code") != "AAAAAAA":
+            break
+        
+        ann_list = result.get("list", [])
+        all_ann.extend(ann_list)
+        
+        total = result.get("totalSize", 0)
+        if len(all_ann) >= total:
+            break
+        page += 1
+    
+    return all_ann
 
 
 def download_pdf(url, prd_code, ann_date):
@@ -256,10 +279,8 @@ def sync_details(codes=None, limit=100):
             nav_list = result.get("list", [])
             save_net_values(code, nav_list)
         
-        # 公告
-        result = get_announcements(code)
-        if result.get("returnCode", {}).get("code") == "AAAAAAA":
-            ann_list = result.get("list", [])
+        # 公告 (使用分页获取全部)
+        ann_list = get_all_announcements(code)
             save_announcements(code, ann_list)
         
         if (i + 1) % 10 == 0:
