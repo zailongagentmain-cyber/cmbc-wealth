@@ -133,7 +133,7 @@ if st.session_state.selected_code is None:
 # 选择产品查看净值走势
 def on_select_change():
     st.session_state.selected_code = st.session_state.product_selector
-    st.rerun()
+    # 不需要 st.rerun()，callback 会自动触发更新
 
 selected = st.selectbox(
     "选择产品代码", 
