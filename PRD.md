@@ -10,15 +10,30 @@
 - **线上地址**: https://zailongagent-cmbc-wealth-trail-1.streamlit.app/
 - **状态**: 开发中
 
-## 2. 当前进度
+## 2. 数据同步工作流 (2026-03-15 更新)
 
-### 已完成 (2026-03-14)
+### 工作流
 
-| 功能 | 数量 | 状态 |
-|------|------|------|
-| 产品列表 | 3515 只 | ✅ 完成 |
-| 历史净值 | 18913 条 | ✅ 完成 |
-| 公告 | 837 条 | ✅ 完成 |
+```
+1. 同步净值数据（分页获取）→ net_values 表
+2. 同步公告数据（分页获取）→ announcements 表
+3. 验证：净值条数 vs 公告条数（预期差异<10%）
+4. 下载 PDF → 本地临时文件
+5. 解析 PDF → 提取净值数据
+6. 存入 pdf_parsed_data 表
+7. 删除本地 PDF 文件
+8. 验证：announcements.download_status=1 vs pdf_parsed_data 有记录
+```
+
+### API 分页参数
+
+- 净值: `pageNo`, `pageSize`
+- 公告: `pageNo`, `pageSize`
+
+### 注意事项
+
+- 旧格式公告（含特殊字符`[]`）无法解析，需跳过
+- PDF 解析失败标记为 download_status=-1
 | PDF 下载 | 待处理 | ⏳ 进行中 |
 
 ### 技术验证
