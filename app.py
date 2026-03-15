@@ -157,24 +157,26 @@ if st.session_state.selected_code:
         
         # 使用紧凑的表格形式显示
         info_html = f"""
-        # 准备数据
-        nav_val = f"{p['nav']:.4f}" if pd.notna(p['nav']) else "N/A"
-        tot_nav_val = f"{p['tot_nav']:.4f}" if pd.notna(p['tot_nav']) else "N/A"
-        nav_date_val = str(p['nav_date']) if pd.notna(p['nav_date']) else "N/A"
-        estal_val = str(p['estal_date']) if pd.notna(p['estal_date']) else "N/A"
-        bench_val = str(p['benchmark']) if pd.notna(p['benchmark']) else "N/A"
-        
-        st.markdown(f"""
-        **产品代码:** {p['code']}
-        **产品名称:** {p['name']}
-        **单位净值:** {nav_val}
-        **累计净值:** {tot_nav_val}
-        **净值日期:** {nav_date_val}
-        **风险等级:** {p['risk_level']}
-        **产品状态:** {p['status']}
-        **成立日期:** {estal_val}
-        **业绩基准:** {bench_val}
-        """)
+        <style>
+        .product-info {{ font-size: 14px; }}
+        .product-info table {{ width: 100%; border-collapse: collapse; }}
+        .product-info td {{ padding: 4px 8px; border: 1px solid #ddd; }}
+        .product-info .label {{ font-weight: bold; background: #f5f5f5; width: 120px; }}
+        </style>
+        <div class="product-info">
+        <table>
+            <tr><td class="label">产品代码</td><td>{p['code']}</td></tr>
+            <tr><td class="label">产品名称</td><td>{p['name']}</td></tr>
+            <tr><td class="label">单位净值</td><td>{p['nav']:.4f if p['nav'] else 'N/A'}</td></tr>
+            <tr><td class="label">累计净值</td><td>{p['tot_nav']:.4f if p['tot_nav'] else 'N/A'}</td></tr>
+            <tr><td class="label">净值日期</td><td>{p['nav_date'] if p['nav_date'] else 'N/A'}</td></tr>
+            <tr><td class="label">风险等级</td><td>{p['risk_level']}</td></tr>
+            <tr><td class="label">产品状态</td><td>{p['status']}</td></tr>
+            <tr><td class="label">成立日期</td><td>{p['estal_date'] if p['estal_date'] else 'N/A'}</td></tr>
+            <tr><td class="label">业绩基准</td><td>{p['benchmark'] if p['benchmark'] else 'N/A'}</td></tr>
+        </table>
+        </div>
+        """
         st.markdown(info_html, unsafe_allow_html=True)
         
         # 历史净值
