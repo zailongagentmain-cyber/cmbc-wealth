@@ -25,7 +25,7 @@ def get_products():
     """获取产品列表"""
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query("""
-        SELECT code, name, nav, tot_nav, risk_level, benchmark, status, estal_date
+        SELECT code, name, nav, tot_nav, nav_date, risk_level, benchmark, status, estal_date
         FROM products
     """, conn)
     conn.close()
@@ -51,6 +51,11 @@ def get_net_values(code):
 # 标题
 st.title("📊 民生理财数据浏览器")
 st.markdown("---")
+
+# 清除缓存按钮
+if st.sidebar.button("🔄 刷新数据"):
+    st.cache_data.clear()
+    st.rerun()
 
 # 获取数据
 df = get_products()
@@ -107,7 +112,7 @@ col3.metric("平均业绩基准", f"{filtered_df['benchmark_avg'].mean():.2f}%")
 st.subheader(f"产品列表 ({len(filtered_df)} 只)")
 st.dataframe(
     filtered_df[['code', 'name', 'nav', 'risk_level', 'benchmark', 'status']],
-    use_container_width=True,
+    width="stretch",
     height=500
 )
 
@@ -115,16 +120,63 @@ st.dataframe(
 st.markdown("---")
 st.subheader("产品详情")
 
-# 选择产品查看净值走势
-selected_code = st.selectbox("选择产品代码", filtered_df['code'].tolist())
+# 使用 session_state 保存选择的产品
+if 'selected_code' not in st.session_state:
+    st.session_state.selected_code = None
 
-if selected_code:
-    nav_df = get_net_values(selected_code)
-    if not nav_df.empty:
-        product_info = filtered_df[filtered_df['code'] == selected_code].iloc[0]
-        st.markdown(f"**{product_info['name']}**")
+# 获取所有产品列表
+all_products_df = get_products()
+all_products = all_products_df['code'].tolist()
+
+# 如果没有选中过，默认选第一个
+if st.session_state.selected_code is None:
+    st.session_state.selected_code = all_products[0] if all_products else None
+
+# 选择产品查看净值走势
+def on_select_change():
+    st.session_state.selected_code = st.session_state.product_selector
+    st.rerun()
+
+selected = st.selectbox(
+    "选择产品代码", 
+    all_products,
+    index=all_products.index(st.session_state.selected_code) if st.session_state.selected_code in all_products else 0,
+    key="product_selector",
+    on_change=on_select_change
+)
+
+if st.session_state.selected_code:
+    # 获取产品信息（不依赖筛选）
+    all_products = get_products()
+    product_info = all_products[all_products['code'] == st.session_state.selected_code]
+    
+    if not product_info.empty:
+        p = product_info.iloc[0]
         
-        # 净值表格
-        st.dataframe(nav_df, use_container_width=True)
+        # 产品基本信息卡片
+        st.markdown("### 📋 产品信息")
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("产品代码", p['code'])
+        col2.metric("单位净值", f"{p['nav']:.4f}" if p['nav'] else "N/A")
+        col3.metric("累计净值", f"{p['tot_nav']:.4f}" if p['tot_nav'] else "N/A")
+        col4.metric("净值日期", p['nav_date'] if p['nav_date'] else "N/A")
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("风险等级", p['risk_level'])
+        col2.metric("产品状态", p['status'])
+        col3.metric("成立日期", p['estal_date'] if p['estal_date'] else "N/A")
+        
+        st.markdown(f"**产品名称:** {p['name']}")
+        if p['benchmark']:
+            st.markdown(f"**业绩基准:** {p['benchmark']}")
+        
+        # 历史净值
+        st.markdown("### 📈 历史净值")
+        nav_df = get_net_values(st.session_state.selected_code)
+        
+        if not nav_df.empty:
+            st.dataframe(nav_df, width="stretch")
+        else:
+            st.warning(f"产品 {st.session_state.selected_code} 暂无历史净值数据")
     else:
-        st.info("暂无净值数据")
+        st.error(f"未找到产品: {st.session_state.selected_code}")
