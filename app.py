@@ -35,7 +35,6 @@ def get_products():
     df['risk_level'] = df['risk_level'].astype(str).map(RISK_MAP).fillna(df['risk_level'])
     return df
 
-@st.cache_data
 def get_net_values(code):
     """获取产品净值历史"""
     conn = sqlite3.connect(DB_PATH)
@@ -153,25 +152,35 @@ if st.session_state.selected_code:
     if not product_info.empty:
         p = product_info.iloc[0]
         
-        # 产品基本信息卡片
-        st.markdown("### 📋 产品信息")
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("产品代码", p['code'])
-        col2.metric("单位净值", f"{p['nav']:.4f}" if p['nav'] else "N/A")
-        col3.metric("累计净值", f"{p['tot_nav']:.4f}" if p['tot_nav'] else "N/A")
-        col4.metric("净值日期", p['nav_date'] if p['nav_date'] else "N/A")
+        # 产品基本信息 - 紧凑布局
+        st.markdown("#### 📋 产品信息")
         
-        col1, col2, col3 = st.columns(3)
-        col1.metric("风险等级", p['risk_level'])
-        col2.metric("产品状态", p['status'])
-        col3.metric("成立日期", p['estal_date'] if p['estal_date'] else "N/A")
-        
-        st.markdown(f"**产品名称:** {p['name']}")
-        if p['benchmark']:
-            st.markdown(f"**业绩基准:** {p['benchmark']}")
+        # 使用紧凑的表格形式显示
+        info_html = f"""
+        <style>
+        .product-info {{ font-size: 14px; }}
+        .product-info table {{ width: 100%; border-collapse: collapse; }}
+        .product-info td {{ padding: 4px 8px; border: 1px solid #ddd; }}
+        .product-info .label {{ font-weight: bold; background: #f5f5f5; width: 120px; }}
+        </style>
+        <div class="product-info">
+        <table>
+            <tr><td class="label">产品代码</td><td>{p['code']}</td></tr>
+            <tr><td class="label">产品名称</td><td>{p['name']}</td></tr>
+            <tr><td class="label">单位净值</td><td>{p['nav']:.4f if p['nav'] else 'N/A'}</td></tr>
+            <tr><td class="label">累计净值</td><td>{p['tot_nav']:.4f if p['tot_nav'] else 'N/A'}</td></tr>
+            <tr><td class="label">净值日期</td><td>{p['nav_date'] if p['nav_date'] else 'N/A'}</td></tr>
+            <tr><td class="label">风险等级</td><td>{p['risk_level']}</td></tr>
+            <tr><td class="label">产品状态</td><td>{p['status']}</td></tr>
+            <tr><td class="label">成立日期</td><td>{p['estal_date'] if p['estal_date'] else 'N/A'}</td></tr>
+            <tr><td class="label">业绩基准</td><td>{p['benchmark'] if p['benchmark'] else 'N/A'}</td></tr>
+        </table>
+        </div>
+        """
+        st.markdown(info_html, unsafe_allow_html=True)
         
         # 历史净值
-        st.markdown("### 📈 历史净值")
+        st.markdown("#### 📈 历史净值")
         nav_df = get_net_values(st.session_state.selected_code)
         
         if not nav_df.empty:
